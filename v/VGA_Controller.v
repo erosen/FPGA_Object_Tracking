@@ -41,9 +41,8 @@
 // --------------------------------------------------------------------
 
 module	VGA_Controller(	//	Host Side
-						iRed,
-						iGreen,
-						iBlue,
+						iGrayMem1,
+						iGrayMem2,
 						oRequest,
 						//	VGA Side
 						oVGA_R,
@@ -59,9 +58,7 @@ module	VGA_Controller(	//	Host Side
 						iRST_N,
 						iZOOM_MODE_SW
 							);
-`include "VGA_Param.h"
 
-`ifdef VGA_640x480p60
 //	Horizontal Parameter	( Pixel )
 parameter	H_SYNC_CYC	=	96;
 parameter	H_SYNC_BACK	=	48;
@@ -76,29 +73,13 @@ parameter	V_SYNC_ACT	=	480;
 parameter	V_SYNC_FRONT=	10;
 parameter	V_SYNC_TOTAL=	525; 
 
-`else
- // SVGA_800x600p60
-////	Horizontal Parameter	( Pixel )
-parameter	H_SYNC_CYC	=	128;         //Peli
-parameter	H_SYNC_BACK	=	88;
-parameter	H_SYNC_ACT	=	800;	
-parameter	H_SYNC_FRONT=	40;
-parameter	H_SYNC_TOTAL=	1056;
-//	Virtical Parameter		( Line )
-parameter	V_SYNC_CYC	=	4;
-parameter	V_SYNC_BACK	=	23;
-parameter	V_SYNC_ACT	=	600;	
-parameter	V_SYNC_FRONT=	1;
-parameter	V_SYNC_TOTAL=	628;
 
-`endif
 //	Start Offset
 parameter	X_START		=	H_SYNC_CYC+H_SYNC_BACK;
 parameter	Y_START		=	V_SYNC_CYC+V_SYNC_BACK;
 //	Host Side
-input		[9:0]	iRed;
-input		[9:0]	iGreen;
-input		[9:0]	iBlue;
+input		[9:0]	iGrayMem1;
+input		[9:0]	iGrayMem2;
 output	reg			oRequest;
 //	VGA Side
 output	reg	[9:0]	oVGA_R;
@@ -128,6 +109,8 @@ reg		[12:0]		V_Cont;
 
 wire	[12:0]		v_mask;
 
+
+
 assign v_mask = 13'd0 ;//iZOOM_MODE_SW ? 13'd0 : 13'd26;
 
 ////////////////////////////////////////////////////////
@@ -137,13 +120,30 @@ assign	mVGA_SYNC	=	1'b0;
 
 assign	mVGA_R	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
 						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
-						?	iRed	:	0;
+						?	RedValue :	0;
 assign	mVGA_G	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
 						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
-						?	iGreen	:	0;
+						?	GrayValue :	0;
 assign	mVGA_B	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
 						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
-						?	iBlue	:	0;
+						?	GrayValue :	0;
+						
+reg [9:0] GrayValue;
+reg [9:0] RedValue;
+
+always@(posedge iCLK)
+begin
+if (iGrayMem1 > iGrayMem2)
+	begin
+		GrayValue =  ((iGrayMem1 - iGrayMem2) > 40) ? 10'b0 : iGrayMem1;
+		RedValue = ((iGrayMem1 - iGrayMem2) > 40) ? 10'b1 : iGrayMem1;
+	end
+else
+	begin
+		GrayValue = ((iGrayMem2 - iGrayMem1 ) > 40) ? 10'b0 : iGrayMem1;
+		RedValue = ((iGrayMem2 - iGrayMem1) > 40) ? 10'b1 : iGrayMem1;
+	end
+end
 
 always@(posedge iCLK or negedge iRST_N)
 	begin
@@ -161,7 +161,7 @@ always@(posedge iCLK or negedge iRST_N)
 			begin
 				oVGA_R <= mVGA_R;
 				oVGA_G <= mVGA_G;
-                oVGA_B <= mVGA_B;
+            oVGA_B <= mVGA_B;
 				oVGA_BLANK <= mVGA_BLANK;
 				oVGA_SYNC <= mVGA_SYNC;
 				oVGA_H_SYNC <= mVGA_H_SYNC;

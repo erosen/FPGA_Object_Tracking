@@ -251,7 +251,7 @@ input		          		CLOCK3_50;
 
 //////////// Sma //////////
 input		          		SMA_CLKIN;
-output		          		SMA_CLKOUT;
+output		          	SMA_CLKOUT;
 
 //////////// LED //////////
 output		     [8:0]		LEDG;
@@ -457,7 +457,9 @@ reg				rCCD_FVAL;
 wire	[11:0]	gCCD_R;
 wire	[11:0]	gCCD_G;
 wire	[11:0]	gCCD_B;
-wire			sCCD_DVAL;
+wire			xCCD_DVAL;
+wire			sCCD_DVAL1;
+wire			sCCD_DVAL2;
 
 wire [11:0] mCCD_G;
 wire [11:0] sCCD_G1;
@@ -529,7 +531,7 @@ RAW2RGB				u4	(	.iCLK(D5M_PIXLCLK),
 							.oRed(gCCD_R),
 							.oGreen(gCCD_G),
 							.oBlue(gCCD_B),
-							.oDVAL(sCCD_DVAL),
+							.oDVAL(xCCD_DVAL),
 							.iX_Cont(X_Cont),
 							.iY_Cont(Y_Cont)
 						);
@@ -543,8 +545,11 @@ RGB2GRAY 			u5 ( .iRed(gCCD_R),
 // Memory Multiplexer
 MEM_SWITCH			u6	(.iGray(mCCD_G),
 							.iFrameCount(Frame_Cont[0]),
+							.iDVAL(xCCD_DVAL),
 							.oGray1(sCCD_G1),
-							.oGray2(sCCD_G2)
+							.oGray2(sCCD_G2),
+							.oDVAL1(sCCD_DVAL1),
+							.oDVAL2(sCCD_DVAL2)
 							);
 
 //Frame count display
@@ -574,7 +579,7 @@ Sdram_Control	u9	(	//	HOST Side
 
 							//	FIFO Write Side 1
 							.WR1_DATA({4'b0,sCCD_G1[11:0]}),
-							.WR1(sCCD_DVAL),
+							.WR1(sCCD_DVAL1),
 							.WR1_ADDR(0),
 						   .WR1_MAX_ADDR(640*480/2),
 						   .WR1_LENGTH(8'h50),
@@ -584,7 +589,7 @@ Sdram_Control	u9	(	//	HOST Side
 
 							//	FIFO Write Side 2
 							.WR2_DATA({4'b0,sCCD_G2[11:0]}),
-							.WR2(sCCD_DVAL),
+							.WR2(sCCD_DVAL2),
 							.WR2_ADDR(23'h100000),
 
 						   .WR2_MAX_ADDR(23'h100000+640*480/2),
@@ -648,9 +653,8 @@ I2C_CCD_Config 		u11	(	//	Host Side
 //VGA DISPLAY
 VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),
-							.iRed(Read_DATA1[9:0]),
-							.iGreen(Read_DATA1[9:0]),
-							.iBlue(Read_DATA1[9:0]),
+							.iGrayMem1(Read_DATA1[11:2]),
+							.iGrayMem2(Read_DATA2[11:2]),
 							//	VGA Side
 							.oVGA_R(oVGA_R),
 							.oVGA_G(oVGA_G),

@@ -16,7 +16,7 @@ output	[11:0]	oGray;
 
 //oGray=0.299R+0.587G+0.114B;
 assign	oGray	=	(iRed >> 2) + (iRed >> 5) + 
-						(iGreen >> 1) + (iGreen >> 4) +
+						(iGreen >> 1) + (iGreen >> 4) + 
 						(iBlue >> 4) + (iBlue >> 5);
 
 endmodule
