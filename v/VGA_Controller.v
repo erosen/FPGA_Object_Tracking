@@ -43,6 +43,7 @@
 module	VGA_Controller(	//	Host Side
 						iGrayMem1,
 						iGrayMem2,
+						iTrackMode,
 						oRequest,
 						//	VGA Side
 						oVGA_R,
@@ -80,6 +81,7 @@ parameter	Y_START		=	V_SYNC_CYC+V_SYNC_BACK;
 //	Host Side
 input		[9:0]	iGrayMem1;
 input		[9:0]	iGrayMem2;
+input 	[3:0] iTrackMode;
 output	reg			oRequest;
 //	VGA Side
 output	reg	[9:0]	oVGA_R;
@@ -161,13 +163,35 @@ begin
 end
 		
 
-// whenever reads the pixel value into GreyValue and RedValue whenever there is a change
-always@(grayChange)
+// Change display mode
+always@(grayChange or iTrackMode)
 begin
-
-		GrayValue =  grayChange ? 0 : 0;
-		RedValue  =  grayChange ? 1023 : 0;
-		
+		case (iTrackMode)
+					
+			4'b0001 : // display only tracking data 
+				begin
+					GrayValue =  0;
+					RedValue  =  grayChange ? 1023 : 0;
+				end
+			
+			4'b0010 : // display tracking data on top of image
+				begin
+					GrayValue =  grayChange ? 0 : iGrayMem1;
+					RedValue  =  grayChange ? 1023 : iGrayMem1;
+				end
+			
+			4'b0100 : // display tracking data in cyan
+				begin
+					GrayValue =  grayChange ? 1023 : 0;
+					RedValue  =  0;
+				end
+				
+			default: // display camera image 
+				begin
+					GrayValue =  iGrayMem1;
+					RedValue  =  iGrayMem1;
+				end
+		endcase
 end
 
 // Index Counter
