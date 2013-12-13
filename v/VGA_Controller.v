@@ -127,22 +127,81 @@ assign	mVGA_G	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
 assign	mVGA_B	=	(	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT &&
 						V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT )
 						?	GrayValue :	0;
-						
+//						
 reg [9:0] GrayValue;
 reg [9:0] RedValue;
+//reg boxValue;
+reg grayChange;
+reg redChange;
 
+reg [18:0] indexCount;
+
+parameter indexCountMax = 307200;
+
+reg [307199:0] binaryMotionArray;
+
+parameter windowSize = 32;
+parameter minDensity = 12;
+
+
+// threshholding and black differencve generation
 always@(posedge iCLK)
 begin
-if (iGrayMem1 > iGrayMem2)
+	if (iGrayMem1 > iGrayMem2)
 	begin
-		GrayValue =  ((iGrayMem1 - iGrayMem2) > 40) ? 10'b0 : iGrayMem1;
-		RedValue = ((iGrayMem1 - iGrayMem2) > 40) ? 10'b1 : iGrayMem1;
+		grayChange =  ( (iGrayMem1 - iGrayMem2) > 50);
 	end
-else
+	
+	else
 	begin
-		GrayValue = ((iGrayMem2 - iGrayMem1 ) > 40) ? 10'b0 : iGrayMem1;
-		RedValue = ((iGrayMem2 - iGrayMem1) > 40) ? 10'b1 : iGrayMem1;
+		grayChange =  ( (iGrayMem2 - iGrayMem1) > 50);
 	end
+end
+		
+
+// whenever reads the pixel value into GreyValue and RedValue whenever there is a change
+always@(grayChange)
+begin
+
+	if (iGrayMem1 > iGrayMem2)
+	begin
+		GrayValue =  ((iGrayMem1 - iGrayMem2) > 50) ? 0 : iGrayMem1;
+		RedValue  =  ((iGrayMem1 - iGrayMem2) > 50) ? 1023 : iGrayMem1;
+	end
+			
+	else
+	begin
+		GrayValue = ((iGrayMem2 - iGrayMem1) > 50) ? 0 : iGrayMem1;
+		RedValue  = ((iGrayMem2 - iGrayMem1) > 50) ? 1023 : iGrayMem1;
+	end
+
+end
+
+// now try some crazy box shit
+always@(mVGA_B or mVGA_G or mVGA_R)
+begin
+	/*location of red pixels*/
+end
+
+// Index Counter
+always@(H_Cont or V_Cont)
+begin
+
+	if ((	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT 
+			&& V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT ))
+	begin
+		if (indexCount < indexCountMax)
+			indexCount = indexCount + 1;
+		else
+			indexCount = 0;
+	end
+end
+
+// sets binaryMotionArray to a 0 or 1 based on the whether or not motion
+// index of binaryMotionArray is based on indexCount 
+always@(indexCount or GrayValue or RedValue)
+begin
+	binaryMotionArray[indexCount] = (GrayValue != RedValue);
 end
 
 always@(posedge iCLK or negedge iRST_N)
