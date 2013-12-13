@@ -142,20 +142,22 @@ reg [307199:0] binaryMotionArray;
 
 parameter windowSize = 32;
 parameter minDensity = 12;
+parameter GrayChangeThreshold = 50;
 
 
 // threshholding and black differencve generation
 always@(posedge iCLK)
 begin
+
 	if (iGrayMem1 > iGrayMem2)
-	begin
-		grayChange =  ( (iGrayMem1 - iGrayMem2) > 50);
-	end
+		begin
+			grayChange =  ((iGrayMem1 - iGrayMem2) > GrayChangeThreshold);
+		end
 	
 	else
-	begin
-		grayChange =  ( (iGrayMem2 - iGrayMem1) > 50);
-	end
+		begin
+			grayChange =  ((iGrayMem2 - iGrayMem1) > GrayChangeThreshold);
+		end
 end
 		
 
@@ -163,24 +165,9 @@ end
 always@(grayChange)
 begin
 
-	if (iGrayMem1 > iGrayMem2)
-	begin
-		GrayValue =  ((iGrayMem1 - iGrayMem2) > 50) ? 0 : iGrayMem1;
-		RedValue  =  ((iGrayMem1 - iGrayMem2) > 50) ? 1023 : iGrayMem1;
-	end
-			
-	else
-	begin
-		GrayValue = ((iGrayMem2 - iGrayMem1) > 50) ? 0 : iGrayMem1;
-		RedValue  = ((iGrayMem2 - iGrayMem1) > 50) ? 1023 : iGrayMem1;
-	end
-
-end
-
-// now try some crazy box shit
-always@(mVGA_B or mVGA_G or mVGA_R)
-begin
-	/*location of red pixels*/
+		GrayValue =  grayChange ? 0 : 0;
+		RedValue  =  grayChange ? 1023 : 0;
+		
 end
 
 // Index Counter
@@ -190,19 +177,30 @@ begin
 	if ((	H_Cont>=X_START 	&& H_Cont<X_START+H_SYNC_ACT 
 			&& V_Cont>=Y_START+v_mask 	&& V_Cont<Y_START+V_SYNC_ACT ))
 	begin
+	
 		if (indexCount < indexCountMax)
+		
 			indexCount = indexCount + 1;
+			
 		else
+		
 			indexCount = 0;
+	
 	end
 end
 
 // sets binaryMotionArray to a 0 or 1 based on the whether or not motion
 // index of binaryMotionArray is based on indexCount 
-always@(indexCount or GrayValue or RedValue)
+always@(indexCount)
 begin
-	binaryMotionArray[indexCount] = (GrayValue != RedValue);
+	binaryMotionArray[indexCount] = grayChange;
 end
+
+always@(binaryMotionArray)
+begin 
+	
+end
+	
 
 always@(posedge iCLK or negedge iRST_N)
 	begin
