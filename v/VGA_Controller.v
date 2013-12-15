@@ -139,8 +139,17 @@ reg redChange;
 reg [18:0] indexCount;
 
 parameter indexCountMax = 307200;
+parameter pixLength = 640;
+parameter pixHeight = 480;
+parameter distanceThresh = 20;
+parameter densityThresh = 10;
 
-reg [307199:0] binaryMotionArray;
+reg motionArray2D [479:0][639:0];
+reg binaryMotionArray [307199:0];
+reg rowMotionArray [307199:0];
+reg continousRow;
+
+integer i;
 
 parameter windowSize = 32;
 parameter minDensity = 12;
@@ -163,9 +172,13 @@ begin
 end
 		
 
-// Change display mode
+
+
+// BROKEN Change display mode vs switches
+
 always@(grayChange or iTrackMode)
 begin
+/*
 		case (iTrackMode)
 					
 			4'b0001 : // display only tracking data 
@@ -176,8 +189,10 @@ begin
 			
 			4'b0010 : // display tracking data on top of image
 				begin
+				*/
 					GrayValue =  grayChange ? 0 : iGrayMem1;
 					RedValue  =  grayChange ? 1023 : iGrayMem1;
+				/*
 				end
 			
 			4'b0100 : // display tracking data in cyan
@@ -186,13 +201,30 @@ begin
 					RedValue  =  0;
 				end
 				
-			default: // display camera image 
+			default : // display camera image 
 				begin
 					GrayValue =  iGrayMem1;
 					RedValue  =  iGrayMem1;
 				end
 		endcase
+*/
 end
+
+
+// Index Counter
+/*
+always@(grayChange)
+begin
+
+	indexCount = 0;
+
+	while ( indexCount < indexCountMax )
+	begin
+		indexCount = indexCount + 1;
+	end
+
+end
+*/
 
 // Index Counter
 always@(H_Cont or V_Cont)
@@ -213,6 +245,8 @@ begin
 	end
 end
 
+
+
 // sets binaryMotionArray to a 0 or 1 based on the whether or not motion
 // index of binaryMotionArray is based on indexCount 
 always@(indexCount)
@@ -220,9 +254,28 @@ begin
 	binaryMotionArray[indexCount] = grayChange;
 end
 
-always@(binaryMotionArray)
+always@(negedge indexCount)
 begin 
-	
+	if(indexCount >= distanceThresh)
+	begin
+		continousRow = 0;
+		
+		for( i = 0; i < distanceThresh; i = i + 1 )
+		begin
+			continousRow = continousRow + binaryMotionArray[indexCount - i];
+		end
+		
+		if(continousRow >= densityThresh)
+		begin
+		
+			for( i = 0; i < distanceThresh; i = i + 1 )
+			begin
+				rowMotionArray[indexCount - i] = 1;
+			end
+		
+		end
+			
+	end
 end
 	
 
