@@ -178,7 +178,7 @@ end
 
 always@(grayChange or iTrackMode)
 begin
-/*
+
 		case (iTrackMode)
 					
 			4'b0001 : // display only tracking data 
@@ -189,10 +189,10 @@ begin
 			
 			4'b0010 : // display tracking data on top of image
 				begin
-				*/
+				
 					GrayValue =  grayChange ? 0 : iGrayMem1;
 					RedValue  =  grayChange ? 1023 : iGrayMem1;
-				/*
+				
 				end
 			
 			4'b0100 : // display tracking data in cyan
@@ -207,7 +207,7 @@ begin
 					RedValue  =  iGrayMem1;
 				end
 		endcase
-*/
+
 end
 
 
