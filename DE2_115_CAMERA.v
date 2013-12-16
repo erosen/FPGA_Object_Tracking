@@ -631,20 +631,13 @@ Sdram_Control	u9	(	//	HOST Side
 							.DQ(DRAM_DQ),
 							.DQM(DRAM_DQM)
 						);
-//Subtract / Threshold Algorithim
-/*
-aSubThreshold 	u10	(.iGray1(Read_DATA1[11:0],
-							 .iGray2(Read_DATA2[11:0]),
-							 .oSubArray(vArray[640*480:0])
-							 );
-*/
 						
 //D5M I2C control
 I2C_CCD_Config 		u11	(	//	Host Side
 							.iCLK(CLOCK2_50),
 							.iRST_N(DLY_RST_2),
 							.iEXPOSURE_ADJ(KEY[1]),
-							.iEXPOSURE_DEC_p(SW[0]),
+							.iEXPOSURE_DEC_p(SW[17]),
 							.iZOOM_MODE_SW(SW[16]),
 							//	I2C Side
 							.I2C_SCLK(D5M_SCLK),
@@ -655,6 +648,7 @@ VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),
 							.iGrayMem1(Read_DATA1[11:2]),
 							.iGrayMem2(Read_DATA2[11:2]),
+							.iTrackMode(SW[3:0]),
 							//	VGA Side
 							.oVGA_R(oVGA_R),
 							.oVGA_G(oVGA_G),
