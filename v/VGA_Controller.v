@@ -57,7 +57,9 @@ module	VGA_Controller(	//	Host Side
 						//	Control Signal
 						iCLK,
 						iRST_N,
-						iZOOM_MODE_SW
+						iZOOM_MODE_SW,
+						
+						oActivityGraph
 							);
 
 //	Horizontal Parameter	( Pixel )
@@ -91,6 +93,10 @@ output	reg			oVGA_H_SYNC;
 output	reg			oVGA_V_SYNC;
 output	reg			oVGA_SYNC;
 output	reg			oVGA_BLANK;
+
+output 	reg 	[4:0] oActivityGraph;
+
+reg [18:0] GrayCount;
 
 wire		[9:0]	mVGA_R;
 wire		[9:0]	mVGA_G;
@@ -171,12 +177,8 @@ begin
 			grayChange =  ((iGrayMem2 - iGrayMem1) > GrayChangeThreshold);
 		end
 end
-		
 
-
-
-// BROKEN Change display mode vs switches
-
+// Change display mode vs switches
 always@(grayChange or iTrackMode)
 begin
 
@@ -254,7 +256,34 @@ begin
 	end
 end
 
+//Count the number of thresholds per frame
+always@(posedge indexCount)
+begin
 
+	if(indexCount > 0 && grayChange)
+		GrayCount = GrayCount + 1;
+	else
+		GrayCount = 0;
+		
+end			
+
+always@(GrayCount)
+begin
+
+	if(indexCount > 0)
+		begin
+		if(GrayCount > 10 && GrayCount <= 500) // 5%
+			oActivityGraph = 5'b00001;
+		else if(GrayCount > 500 && GrayCount <= 1000) // 10%
+			oActivityGraph = 5'b00011;
+		else if(GrayCount > 1000 && GrayCount <= 10000) // 25%
+			oActivityGraph = 5'b00111;
+		else if(GrayCount > 100000 && GrayCount <= 2000000) // 50%
+			oActivityGraph = 5'b01111;
+		else
+			oActivityGraph = 5'b00000;
+		end
+end
 
 // sets binaryMotionArray to a 0 or 1 based on the whether or not motion
 // index of binaryMotionArray is based on indexCount 
