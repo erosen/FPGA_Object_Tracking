@@ -648,7 +648,7 @@ VGA_Controller		u1	(	//	Host Side
 							.oRequest(Read),
 							.iGrayMem1(Read_DATA1[11:2]),
 							.iGrayMem2(Read_DATA2[11:2]),
-							.iTrackMode(SW[3:0]),
+							.iTrackMode(SW[9:0]),
 							//	VGA Side
 							.oVGA_R(oVGA_R),
 							.oVGA_G(oVGA_G),

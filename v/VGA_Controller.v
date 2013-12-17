@@ -81,7 +81,7 @@ parameter	Y_START		=	V_SYNC_CYC+V_SYNC_BACK;
 //	Host Side
 input		[9:0]	iGrayMem1;
 input		[9:0]	iGrayMem2;
-input 	[3:0] iTrackMode;
+input 	[9:0] iTrackMode;
 output	reg			oRequest;
 //	VGA Side
 output	reg	[9:0]	oVGA_R;
@@ -153,7 +153,8 @@ integer i;
 
 parameter windowSize = 32;
 parameter minDensity = 12;
-parameter GrayChangeThreshold = 50;
+
+reg [6:0] GrayChangeThreshold;
 
 
 // threshholding and black differencve generation
@@ -179,7 +180,7 @@ end
 always@(grayChange or iTrackMode)
 begin
 
-		case (iTrackMode)
+		case (iTrackMode[3:0])
 					
 			4'b0001 : // display only tracking data 
 				begin
@@ -207,9 +208,17 @@ begin
 					RedValue  =  iGrayMem1;
 				end
 		endcase
-
+		
+		// Change the threshold value from switches
+		case (iTrackMode[7:4])
+			4'b0001 : GrayChangeThreshold = 0;
+			4'b0010 : GrayChangeThreshold = 16;
+			4'b0100 : GrayChangeThreshold = 32;
+			4'b1000 : GrayChangeThreshold = 64;
+			default : GrayChangeThreshold = 50;
+		endcase
+		
 end
-
 
 // Index Counter
 /*
