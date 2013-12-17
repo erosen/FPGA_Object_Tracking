@@ -469,7 +469,7 @@ wire			sdram_ctrl_clk;
 wire	[9:0]	oVGA_R;   				//	VGA Red[9:0]
 wire	[9:0]	oVGA_G;	 				//	VGA Green[9:0]
 wire	[9:0]	oVGA_B;   				//	VGA Blue[9:0]
-wire	[4:0] ActivityGraph;
+wire	[7:0] ActivityGraph;
 
 //power on start
 wire             auto_start;
@@ -482,9 +482,8 @@ assign	D5M_RESET_N	=	DLY_RST_1;
 assign  VGA_CTRL_CLK = ~VGA_CLK;
 
 assign	LEDR		=	SW;
-assign	LEDG[0] =	Y_Cont;
-assign	LEDG[5:1] = ActivityGraph;
-assign 	LEDG[8:6]	 = 3'b0;
+assign	LEDG[7:0] = ActivityGraph;
+assign 	LEDG[8]	 = Y_Cont;
 assign	UART_TXD = UART_RXD;
 
 //fetch the high 8 bits
