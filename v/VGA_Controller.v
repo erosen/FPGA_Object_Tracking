@@ -94,7 +94,7 @@ output	reg			oVGA_V_SYNC;
 output	reg			oVGA_SYNC;
 output	reg			oVGA_BLANK;
 
-output 	reg 	[4:0] oActivityGraph;
+output 	reg 	[7:0] oActivityGraph;
 
 reg [18:0] GrayCount;
 
@@ -223,21 +223,6 @@ begin
 end
 
 // Index Counter
-/*
-always@(grayChange)
-begin
-
-	indexCount = 0;
-
-	while ( indexCount < indexCountMax )
-	begin
-		indexCount = indexCount + 1;
-	end
-
-end
-*/
-
-// Index Counter
 always@(H_Cont or V_Cont)
 begin
 
@@ -267,21 +252,28 @@ begin
 		
 end			
 
+//Adjust activity graph based on the amount of motion between frames
 always@(GrayCount)
 begin
 
 	if(indexCount > 0)
 		begin
-		if(GrayCount > 10 && GrayCount <= 500) // 5%
-			oActivityGraph = 5'b00001;
-		else if(GrayCount > 500 && GrayCount <= 1000) // 10%
-			oActivityGraph = 5'b00011;
-		else if(GrayCount > 1000 && GrayCount <= 10000) // 25%
-			oActivityGraph = 5'b00111;
-		else if(GrayCount > 100000 && GrayCount <= 2000000) // 50%
-			oActivityGraph = 5'b01111;
+		if(GrayCount > 10 && GrayCount <= 50) // 5%
+			oActivityGraph = 1;
+		else if(GrayCount > 50 && GrayCount <= 250) // 10%
+			oActivityGraph = 3;
+		else if(GrayCount > 250 && GrayCount <= 1000) // 25%
+			oActivityGraph = 7;
+		else if(GrayCount > 1000 && GrayCount <= 10000) // 50%
+			oActivityGraph = 15;
+		else if(GrayCount > 10000 && GrayCount <= 200000) // 60%
+			oActivityGraph = 31;
+		else if(GrayCount > 200000 && GrayCount <= 300000 ) // 75%
+			oActivityGraph = 63;
+		else if(GrayCount > 100000 && GrayCount <= 307200) // 100%
+			oActivityGraph = 255;
 		else
-			oActivityGraph = 5'b00000;
+			oActivityGraph = 0;
 		end
 end
 
